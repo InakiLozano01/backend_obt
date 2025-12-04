@@ -319,13 +319,14 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    /* 5) Insertar reserva no pagada */
+    /* 5) Insertar reserva (la marcamos pagada = 'S' para testear la regla, de lo contrario podriamos
+    tener infinitas reservas activas y no pagadas) */
     INSERT INTO Reservas (
         IdFuncion, IdPelicula, IdSala, IdButaca,
         DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones
     ) VALUES (
         pIdFuncion, vIdPelicula, vIdSala, pIdButaca,
-        pDNI, NOW(), NULL, 'N', NULL
+        pDNI, NOW(), NULL, 'S', NULL
     );
 
     SET pMensaje = 'OK';
