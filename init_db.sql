@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS Reservas (
 -- Crear índices
 -- Nota: Como hacemos DROP DATABASE antes, los índices no existen, así que podemos crearlos directamente
 CREATE INDEX IDX_Funciones_FechaInicio ON Funciones (FechaInicio);
-
+CREATE INDEX IDX_Butacas_IdSala_NroButaca ON Butacas (IdSala, NroButaca);
 CREATE INDEX IDX_Reservas_IdFuncion_IdButaca ON Reservas (IdFuncion, IdButaca);
 
 -- índices útiles adicionales sobre FKs
@@ -319,13 +319,13 @@ proc: BEGIN
         LEAVE proc;
     END IF;
 
-    /* 5) Insertar reserva (la marcamos pagada = 'S' para testear la regla) */
+    /* 5) Insertar reserva no pagada */
     INSERT INTO Reservas (
         IdFuncion, IdPelicula, IdSala, IdButaca,
         DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones
     ) VALUES (
         pIdFuncion, vIdPelicula, vIdSala, pIdButaca,
-        pDNI, NOW(), NULL, 'S', NULL
+        pDNI, NOW(), NULL, 'N', NULL
     );
 
     SET pMensaje = 'OK';
