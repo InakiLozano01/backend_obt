@@ -1,0 +1,894 @@
+{
+	"info": {
+		"_postman_id": "cinema-api-collection",
+		"name": "Cinema API - Sistema de Cine",
+		"description": "Colección de pruebas para la API del Sistema de Cine.\n\n## Endpoints\n- GET /precios/{idFuncion} - Calcular precio de una función\n- POST /reservas - Crear una reserva\n- GET /reservas/{dni} - Listar reservas por DNI\n- GET /reporte/ocupacion - Reporte de ocupación por película\n\n## Distribución de Butacas\n- Sala VIP (1): IdButaca 1-50\n- Sala 1 (2): IdButaca 51-130\n- Sala 2 (3): IdButaca 131-210\n- Sala 3 (4): IdButaca 211-290\n- Sala 4 (5): IdButaca 291-370\n- Sala IMAX (6): IdButaca 371-470\n- Sala 3D (7): IdButaca 471-550\n- Sala Premium (8): IdButaca 551-610",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000/api/v1",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Precios",
+			"item": [
+				{
+					"name": "✅ Precio Estreno + VIP (Función 1)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/precios/1",
+							"host": ["{{base_url}}"],
+							"path": ["precios", "1"]
+						},
+						"description": "Precio para Estreno + VIP (aplica +10% + 5% = +15.5%)\nFunción 1: Avatar 3 en Sala VIP, precio base 1500\nPrecio esperado: 1732.50"
+					}
+				},
+				{
+					"name": "✅ Precio Estreno estándar (Función 4)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/precios/4",
+							"host": ["{{base_url}}"],
+							"path": ["precios", "4"]
+						},
+						"description": "Precio para Estreno en sala estándar (solo +10%)\nFunción 4: Avatar 3 en Sala 1, precio base 1200\nPrecio esperado: 1320"
+					}
+				},
+				{
+					"name": "✅ Precio 3D (Función 7)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/precios/7",
+							"host": ["{{base_url}}"],
+							"path": ["precios", "7"]
+						},
+						"description": "Precio para película 3D (solo +10%)\nFunción 7: Jurassic World 4 en Sala 3D, precio base 1100\nPrecio esperado: 1210"
+					}
+				},
+				{
+					"name": "✅ Precio Normal (Función 9)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/precios/9",
+							"host": ["{{base_url}}"],
+							"path": ["precios", "9"]
+						},
+						"description": "Precio para función normal (sin recargos)\nFunción 9: Misión Imposible en Sala 1, precio base 1000\nPrecio esperado: 1000"
+					}
+				},
+				{
+					"name": "✅ Precio IMAX (Función 13)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/precios/13",
+							"host": ["{{base_url}}"],
+							"path": ["precios", "13"]
+						},
+						"description": "Precio para función en IMAX (sin recargo especial)\nFunción 13: Odisea Espacial en Sala IMAX, precio base 1400\nPrecio esperado: 1400"
+					}
+				},
+				{
+					"name": "❌ Función no encontrada",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/precios/9999",
+							"host": ["{{base_url}}"],
+							"path": ["precios", "9999"]
+						},
+						"description": "ERROR 404: Función no existe"
+					}
+				},
+				{
+					"name": "❌ Función finalizada (20)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/precios/20",
+							"host": ["{{base_url}}"],
+							"path": ["precios", "20"]
+						},
+						"description": "ERROR 400: Función finalizada (FechaFin NOT NULL)"
+					}
+				},
+				{
+					"name": "❌ Función inactiva (22)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/precios/22",
+							"host": ["{{base_url}}"],
+							"path": ["precios", "22"]
+						},
+						"description": "ERROR 400: Función inactiva (Estado='I')"
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Reservas - Crear",
+			"item": [
+				{
+					"name": "✅ Crear reserva Sala VIP (Función 1)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 1,\n    \"id_butaca\": 20,\n    \"dni\": \"99887766\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "Crear reserva en Función 1 (Sala VIP)\nButaca 20 está libre (rango válido: 1-50)"
+					}
+				},
+				{
+					"name": "✅ Crear reserva Sala 1 (Función 9)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 9,\n    \"id_butaca\": 70,\n    \"dni\": \"99887766\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "Crear reserva en Función 9 (Sala 1)\nButaca 70 está libre (rango válido: 51-130)"
+					}
+				},
+				{
+					"name": "✅ Crear reserva Sala 2 (Función 10)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 10,\n    \"id_butaca\": 150,\n    \"dni\": \"11112222\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "Crear reserva en Función 10 (Sala 2)\nButaca 150 está libre (rango válido: 131-210)"
+					}
+				},
+				{
+					"name": "✅ Crear reserva Sala 3D (Función 7)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 7,\n    \"id_butaca\": 480,\n    \"dni\": \"66665555\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "Crear reserva en Función 7 (Sala 3D)\nButaca 480 está libre (rango válido: 471-550)"
+					}
+				},
+				{
+					"name": "✅ Crear reserva IMAX (Función 13)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 13,\n    \"id_butaca\": 400,\n    \"dni\": \"77776666\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "Crear reserva en Función 13 (IMAX)\nButaca 400 está libre (rango válido: 371-470)"
+					}
+				},
+				{
+					"name": "✅ Crear reserva Premium (Función 15)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 15,\n    \"id_butaca\": 560,\n    \"dni\": \"88887777\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "Crear reserva en Función 15 (Premium)\nButaca 560 está libre (rango válido: 551-610)"
+					}
+				},
+				{
+					"name": "❌ Límite DNI excedido (12345678)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 1,\n    \"id_butaca\": 20,\n    \"dni\": \"12345678\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 409: DNI 12345678 ya tiene 4 reservas pagadas para el 2025-12-20"
+					}
+				},
+				{
+					"name": "❌ Límite DNI excedido (33445566)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 4,\n    \"id_butaca\": 70,\n    \"dni\": \"33445566\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 409: DNI 33445566 ya tiene 4 reservas pagadas para el 2025-12-20"
+					}
+				},
+				{
+					"name": "❌ Límite DNI excedido (00112233)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 14,\n    \"id_butaca\": 390,\n    \"dni\": \"00112233\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 409: DNI 00112233 ya tiene 4 reservas pagadas para el 2025-12-22"
+					}
+				},
+				{
+					"name": "❌ Butaca ya reservada (1)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 1,\n    \"id_butaca\": 1,\n    \"dni\": \"99999999\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 409: Butaca 1 ya está reservada para función 1"
+					}
+				},
+				{
+					"name": "❌ Butaca ya reservada (51)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 4,\n    \"id_butaca\": 51,\n    \"dni\": \"99999999\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 409: Butaca 51 ya está reservada para función 4"
+					}
+				},
+				{
+					"name": "❌ Función no existe",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 9999,\n    \"id_butaca\": 1,\n    \"dni\": \"12345678\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 404: Función no existe"
+					}
+				},
+				{
+					"name": "❌ Función inactiva",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 22,\n    \"id_butaca\": 220,\n    \"dni\": \"12345678\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 400: Función 22 está inactiva (Estado='I')"
+					}
+				},
+				{
+					"name": "❌ Función finalizada",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 20,\n    \"id_butaca\": 70,\n    \"dni\": \"12345678\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 400: Función 20 está finalizada (FechaFin NOT NULL)"
+					}
+				},
+				{
+					"name": "❌ Butaca no pertenece a sala",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 9,\n    \"id_butaca\": 1,\n    \"dni\": \"12345678\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 400: Función 9 es en Sala 1 (IdButaca 51-130), butaca 1 está en Sala VIP"
+					}
+				},
+				{
+					"name": "❌ DNI muy corto",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 9,\n    \"id_butaca\": 70,\n    \"dni\": \"123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 400: DNI muy corto (mínimo 7 caracteres)"
+					}
+				},
+				{
+					"name": "❌ DNI muy largo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 9,\n    \"id_butaca\": 70,\n    \"dni\": \"123456789012\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 400: DNI muy largo (máximo 11 caracteres)"
+					}
+				},
+				{
+					"name": "❌ Falta campo dni",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_funcion\": 9,\n    \"id_butaca\": 70\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 400: Falta campo dni"
+					}
+				},
+				{
+					"name": "❌ Body vacío",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reservas",
+							"host": ["{{base_url}}"],
+							"path": ["reservas"]
+						},
+						"description": "ERROR 400: Body vacío"
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Reservas - Listar por DNI",
+			"item": [
+				{
+					"name": "✅ Reservas DNI 12345678 (6 reservas + 1 after testing)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reservas/12345678",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "12345678"]
+						},
+						"description": "DNI con múltiples reservas (12345678 tiene 6 reservas)"
+					}
+				},
+				{
+					"name": "✅ Reservas con paginación (página 1)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reservas/12345678?page=1&per_page=2",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "12345678"],
+							"query": [
+								{"key": "page", "value": "1"},
+								{"key": "per_page", "value": "2"}
+							]
+						},
+						"description": "Reservas con paginación - página 1, 2 por página"
+					}
+				},
+				{
+					"name": "✅ Reservas con paginación (página 2)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reservas/12345678?page=2&per_page=2",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "12345678"],
+							"query": [
+								{"key": "page", "value": "2"},
+								{"key": "per_page", "value": "2"}
+							]
+						},
+						"description": "Reservas con paginación - página 2, 2 por página"
+					}
+				},
+				{
+					"name": "✅ Reservas DNI 87654321",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reservas/87654321",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "87654321"]
+						},
+						"description": "DNI 87654321 (tiene 2 reservas: 1 pagada, 1 no pagada)"
+					}
+				},
+				{
+					"name": "✅ Reservas DNI 11223344 (con cancelada)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reservas/11223344",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "11223344"]
+						},
+						"description": "DNI 11223344 (tiene reserva cancelada y activas)"
+					}
+				},
+				{
+					"name": "✅ Reservas DNI 33445566 (límite)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reservas/33445566",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "33445566"]
+						},
+						"description": "DNI 33445566 (4 reservas pagadas - al límite)"
+					}
+				},
+				{
+					"name": "✅ Reservas DNI 00112233 (límite)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reservas/00112233",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "00112233"]
+						},
+						"description": "DNI 00112233 (4 reservas pagadas - al límite para 22/12)"
+					}
+				},
+				{
+					"name": "✅ Reservas DNI 77889900 (IMAX)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reservas/77889900",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "77889900"]
+						},
+						"description": "DNI 77889900 (reservas en IMAX y Sala 3)"
+					}
+				},
+				{
+					"name": "✅ DNI sin reservas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reservas/00000000",
+							"host": ["{{base_url}}"],
+							"path": ["reservas", "00000000"]
+						},
+						"description": "DNI sin reservas (resultado vacío)"
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Reporte Ocupación",
+			"item": [
+				{
+					"name": "✅ Reporte Avatar 3 (Película 1)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=1&fechaInicio=2025-12-01&fechaFin=2025-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "1"},
+								{"key": "fechaInicio", "value": "2025-12-01"},
+								{"key": "fechaFin", "value": "2025-12-31"}
+							]
+						},
+						"description": "Reporte Avatar 3 (IdPelicula=1) - Diciembre 2025"
+					}
+				},
+				{
+					"name": "✅ Reporte Misión Imposible (Película 6)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=6&fechaInicio=2025-12-01&fechaFin=2025-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "6"},
+								{"key": "fechaInicio", "value": "2025-12-01"},
+								{"key": "fechaFin", "value": "2025-12-31"}
+							]
+						},
+						"description": "Reporte Misión Imposible (IdPelicula=6) - tiene varias funciones"
+					}
+				},
+				{
+					"name": "✅ Reporte con paginación",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=6&fechaInicio=2025-12-01&fechaFin=2025-12-31&page=1&per_page=2",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "6"},
+								{"key": "fechaInicio", "value": "2025-12-01"},
+								{"key": "fechaFin", "value": "2025-12-31"},
+								{"key": "page", "value": "1"},
+								{"key": "per_page", "value": "2"}
+							]
+						},
+						"description": "Reporte con paginación - página 1, 2 por página"
+					}
+				},
+				{
+					"name": "✅ Reporte Drama (Película 8)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=8&fechaInicio=2025-12-01&fechaFin=2025-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "8"},
+								{"key": "fechaInicio", "value": "2025-12-01"},
+								{"key": "fechaFin", "value": "2025-12-31"}
+							]
+						},
+						"description": "Reporte Drama (IdPelicula=8)"
+					}
+				},
+				{
+					"name": "✅ Reporte Odisea IMAX (Película 10)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=10&fechaInicio=2025-12-01&fechaFin=2025-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "10"},
+								{"key": "fechaInicio", "value": "2025-12-01"},
+								{"key": "fechaFin", "value": "2025-12-31"}
+							]
+						},
+						"description": "Reporte Odisea Espacial IMAX (IdPelicula=10)"
+					}
+				},
+				{
+					"name": "✅ Reporte sin funciones (2024)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=1&fechaInicio=2024-01-01&fechaFin=2024-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "1"},
+								{"key": "fechaInicio", "value": "2024-01-01"},
+								{"key": "fechaFin", "value": "2024-12-31"}
+							]
+						},
+						"description": "Película sin funciones en el rango de fechas (resultado vacío)"
+					}
+				},
+				{
+					"name": "✅ Película inexistente",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=999&fechaInicio=2025-12-01&fechaFin=2025-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "999"},
+								{"key": "fechaInicio", "value": "2025-12-01"},
+								{"key": "fechaFin", "value": "2025-12-31"}
+							]
+						},
+						"description": "Película inexistente (resultado vacío)"
+					}
+				},
+				{
+					"name": "❌ Falta idPelicula",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?fechaInicio=2025-12-01&fechaFin=2025-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "fechaInicio", "value": "2025-12-01"},
+								{"key": "fechaFin", "value": "2025-12-31"}
+							]
+						},
+						"description": "ERROR 400: Falta idPelicula"
+					}
+				},
+				{
+					"name": "❌ Falta fechaInicio",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=1&fechaFin=2025-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "1"},
+								{"key": "fechaFin", "value": "2025-12-31"}
+							]
+						},
+						"description": "ERROR 400: Falta fechaInicio"
+					}
+				},
+				{
+					"name": "❌ Falta fechaFin",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=1&fechaInicio=2025-12-01",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "1"},
+								{"key": "fechaInicio", "value": "2025-12-01"}
+							]
+						},
+						"description": "ERROR 400: Falta fechaFin"
+					}
+				},
+				{
+					"name": "❌ Formato fecha inválido",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion?idPelicula=1&fechaInicio=01-12-2025&fechaFin=31-12-2025",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"],
+							"query": [
+								{"key": "idPelicula", "value": "1"},
+								{"key": "fechaInicio", "value": "01-12-2025"},
+								{"key": "fechaFin", "value": "31-12-2025"}
+							]
+						},
+						"description": "ERROR 400: Formato de fecha inválido (DD-MM-YYYY en vez de YYYY-MM-DD)"
+					}
+				},
+				{
+					"name": "❌ Sin parámetros",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reporte/ocupacion",
+							"host": ["{{base_url}}"],
+							"path": ["reporte", "ocupacion"]
+						},
+						"description": "ERROR 400: Sin parámetros"
+					}
+				}
+			]
+		}
+	]
+}

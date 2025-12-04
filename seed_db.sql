@@ -6,6 +6,16 @@
    1. Trunca todas las tablas en el orden correcto (respetando FK)
    2. Resetea AUTO_INCREMENT a 1
    3. Inserta datos de prueba consistentes
+   
+   Distribución de Butacas (IdButaca):
+   - Sala VIP (1):    IdButaca 1-50     (50 butacas)
+   - Sala 1 (2):      IdButaca 51-130   (80 butacas)
+   - Sala 2 (3):      IdButaca 131-210  (80 butacas)
+   - Sala 3 (4):      IdButaca 211-290  (80 butacas)
+   - Sala 4 (5):      IdButaca 291-370  (80 butacas)
+   - Sala IMAX (6):   IdButaca 371-470  (100 butacas)
+   - Sala 3D (7):     IdButaca 471-550  (80 butacas)
+   - Sala Premium (8): IdButaca 551-610 (60 butacas)
    ========================================================= */
 
 USE cine_db;
@@ -91,113 +101,146 @@ INSERT INTO Peliculas (IdPelicula, IdGenero, Pelicula, Sinopsis, Duracion, Actor
 (15, 11, 'Documental Naturaleza', 'Un recorrido por los ecosistemas más increíbles del planeta.', 90, 'David Attenborough (narrador)', 'A', 'Género inactivo');
 
 /* =========================================================
-   5) BUTACAS
+   5) BUTACAS - Con IdButaca EXPLÍCITO para IDs predecibles
+   
    Distribución:
-   - Sala VIP (1): 50 butacas (IdButaca 1-50)
-   - Sala 1 (2): 80 butacas (IdButaca 51-130)
-   - Sala 2 (3): 80 butacas (IdButaca 131-210)
-   - Sala 3 (4): 80 butacas (IdButaca 211-290)
-   - Sala 4 (5): 80 butacas (IdButaca 291-370)
-   - Sala IMAX (6): 100 butacas (IdButaca 371-470)
-   - Sala 3D (7): 80 butacas (IdButaca 471-550)
-   - Sala Premium (8): 60 butacas (IdButaca 551-610)
+   - Sala VIP (1):    IdButaca 1-50     (50 butacas)
+   - Sala 1 (2):      IdButaca 51-130   (80 butacas)
+   - Sala 2 (3):      IdButaca 131-210  (80 butacas)
+   - Sala 3 (4):      IdButaca 211-290  (80 butacas)
+   - Sala 4 (5):      IdButaca 291-370  (80 butacas)
+   - Sala IMAX (6):   IdButaca 371-470  (100 butacas)
+   - Sala 3D (7):     IdButaca 471-550  (80 butacas)
+   - Sala Premium (8): IdButaca 551-610 (60 butacas)
    ========================================================= */
 
--- Sala VIP (IdSala=1) - 50 butacas en 5 filas x 10 columnas
-INSERT INTO Butacas (IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
-SELECT 1, n, FLOOR((n-1)/10) + 1, ((n-1) % 10) + 1, 'A',
-       CASE WHEN n <= 10 THEN 'Fila VIP delantera' ELSE NULL END
-FROM (
-    SELECT a.N + b.N * 10 + 1 AS n
-    FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
-         (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4) b
-    ORDER BY n
-) numbers WHERE n <= 50;
+-- Procedimiento para generar butacas con IdButaca explícito
+DELIMITER $$
 
--- Sala 1 (IdSala=2) - 80 butacas
-INSERT INTO Butacas (IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
-SELECT 2, n, FLOOR((n-1)/10) + 1, ((n-1) % 10) + 1, 'A', NULL
-FROM (
-    SELECT a.N + b.N * 10 + 1 AS n
-    FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
-         (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) b
-    ORDER BY n
-) numbers WHERE n <= 80;
+DROP PROCEDURE IF EXISTS GenerarButacas$$
 
--- Sala 2 (IdSala=3) - 80 butacas
-INSERT INTO Butacas (IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
-SELECT 3, n, FLOOR((n-1)/10) + 1, ((n-1) % 10) + 1, 'A', NULL
-FROM (
-    SELECT a.N + b.N * 10 + 1 AS n
-    FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
-         (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) b
-    ORDER BY n
-) numbers WHERE n <= 80;
+CREATE PROCEDURE GenerarButacas()
+BEGIN
+    DECLARE i INT;
+    DECLARE id_butaca INT;
+    DECLARE id_sala INT;
+    DECLARE nro_butaca INT;
+    DECLARE fila INT;
+    DECLARE columna INT;
+    
+    -- Sala VIP (IdSala=1): 50 butacas, IdButaca 1-50
+    SET id_sala = 1;
+    SET i = 1;
+    WHILE i <= 50 DO
+        SET id_butaca = i;
+        SET nro_butaca = i;
+        SET fila = FLOOR((i-1)/10) + 1;
+        SET columna = ((i-1) MOD 10) + 1;
+        INSERT INTO Butacas (IdButaca, IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
+        VALUES (id_butaca, id_sala, nro_butaca, fila, columna, 'A', 
+                CASE WHEN i <= 10 THEN 'Fila VIP delantera' ELSE NULL END);
+        SET i = i + 1;
+    END WHILE;
+    
+    -- Sala 1 (IdSala=2): 80 butacas, IdButaca 51-130
+    SET id_sala = 2;
+    SET i = 1;
+    WHILE i <= 80 DO
+        SET id_butaca = 50 + i;
+        SET nro_butaca = i;
+        SET fila = FLOOR((i-1)/10) + 1;
+        SET columna = ((i-1) MOD 10) + 1;
+        INSERT INTO Butacas (IdButaca, IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
+        VALUES (id_butaca, id_sala, nro_butaca, fila, columna, 'A', NULL);
+        SET i = i + 1;
+    END WHILE;
+    
+    -- Sala 2 (IdSala=3): 80 butacas, IdButaca 131-210
+    SET id_sala = 3;
+    SET i = 1;
+    WHILE i <= 80 DO
+        SET id_butaca = 130 + i;
+        SET nro_butaca = i;
+        SET fila = FLOOR((i-1)/10) + 1;
+        SET columna = ((i-1) MOD 10) + 1;
+        INSERT INTO Butacas (IdButaca, IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
+        VALUES (id_butaca, id_sala, nro_butaca, fila, columna, 'A', NULL);
+        SET i = i + 1;
+    END WHILE;
+    
+    -- Sala 3 (IdSala=4): 80 butacas, IdButaca 211-290
+    SET id_sala = 4;
+    SET i = 1;
+    WHILE i <= 80 DO
+        SET id_butaca = 210 + i;
+        SET nro_butaca = i;
+        SET fila = FLOOR((i-1)/10) + 1;
+        SET columna = ((i-1) MOD 10) + 1;
+        INSERT INTO Butacas (IdButaca, IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
+        VALUES (id_butaca, id_sala, nro_butaca, fila, columna, 'A', NULL);
+        SET i = i + 1;
+    END WHILE;
+    
+    -- Sala 4 (IdSala=5): 80 butacas, IdButaca 291-370
+    SET id_sala = 5;
+    SET i = 1;
+    WHILE i <= 80 DO
+        SET id_butaca = 290 + i;
+        SET nro_butaca = i;
+        SET fila = FLOOR((i-1)/10) + 1;
+        SET columna = ((i-1) MOD 10) + 1;
+        INSERT INTO Butacas (IdButaca, IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
+        VALUES (id_butaca, id_sala, nro_butaca, fila, columna, 'A', NULL);
+        SET i = i + 1;
+    END WHILE;
+    
+    -- Sala IMAX (IdSala=6): 100 butacas, IdButaca 371-470
+    SET id_sala = 6;
+    SET i = 1;
+    WHILE i <= 100 DO
+        SET id_butaca = 370 + i;
+        SET nro_butaca = i;
+        SET fila = FLOOR((i-1)/10) + 1;
+        SET columna = ((i-1) MOD 10) + 1;
+        INSERT INTO Butacas (IdButaca, IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
+        VALUES (id_butaca, id_sala, nro_butaca, fila, columna, 'A', NULL);
+        SET i = i + 1;
+    END WHILE;
+    
+    -- Sala 3D (IdSala=7): 80 butacas, IdButaca 471-550
+    SET id_sala = 7;
+    SET i = 1;
+    WHILE i <= 80 DO
+        SET id_butaca = 470 + i;
+        SET nro_butaca = i;
+        SET fila = FLOOR((i-1)/10) + 1;
+        SET columna = ((i-1) MOD 10) + 1;
+        INSERT INTO Butacas (IdButaca, IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
+        VALUES (id_butaca, id_sala, nro_butaca, fila, columna, 'A', NULL);
+        SET i = i + 1;
+    END WHILE;
+    
+    -- Sala Premium (IdSala=8): 60 butacas, IdButaca 551-610
+    SET id_sala = 8;
+    SET i = 1;
+    WHILE i <= 60 DO
+        SET id_butaca = 550 + i;
+        SET nro_butaca = i;
+        SET fila = FLOOR((i-1)/10) + 1;
+        SET columna = ((i-1) MOD 10) + 1;
+        INSERT INTO Butacas (IdButaca, IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
+        VALUES (id_butaca, id_sala, nro_butaca, fila, columna, 'A', NULL);
+        SET i = i + 1;
+    END WHILE;
+END$$
 
--- Sala 3 (IdSala=4) - 80 butacas
-INSERT INTO Butacas (IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
-SELECT 4, n, FLOOR((n-1)/10) + 1, ((n-1) % 10) + 1, 'A', NULL
-FROM (
-    SELECT a.N + b.N * 10 + 1 AS n
-    FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
-         (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) b
-    ORDER BY n
-) numbers WHERE n <= 80;
+DELIMITER ;
 
--- Sala 4 (IdSala=5) - 80 butacas
-INSERT INTO Butacas (IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
-SELECT 5, n, FLOOR((n-1)/10) + 1, ((n-1) % 10) + 1, 'A', NULL
-FROM (
-    SELECT a.N + b.N * 10 + 1 AS n
-    FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
-         (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) b
-    ORDER BY n
-) numbers WHERE n <= 80;
+-- Ejecutar el procedimiento para generar butacas
+CALL GenerarButacas();
 
--- Sala IMAX (IdSala=6) - 100 butacas
-INSERT INTO Butacas (IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
-SELECT 6, n, FLOOR((n-1)/10) + 1, ((n-1) % 10) + 1, 'A', NULL
-FROM (
-    SELECT a.N + b.N * 10 + 1 AS n
-    FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
-         (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) b
-    ORDER BY n
-) numbers WHERE n <= 100;
-
--- Sala 3D (IdSala=7) - 80 butacas
-INSERT INTO Butacas (IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
-SELECT 7, n, FLOOR((n-1)/10) + 1, ((n-1) % 10) + 1, 'A', NULL
-FROM (
-    SELECT a.N + b.N * 10 + 1 AS n
-    FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
-         (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7) b
-    ORDER BY n
-) numbers WHERE n <= 80;
-
--- Sala Premium (IdSala=8) - 60 butacas
-INSERT INTO Butacas (IdSala, NroButaca, Fila, Columna, Estado, Observaciones)
-SELECT 8, n, FLOOR((n-1)/10) + 1, ((n-1) % 10) + 1, 'A', NULL
-FROM (
-    SELECT a.N + b.N * 10 + 1 AS n
-    FROM (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) a,
-         (SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
-          UNION SELECT 5) b
-    ORDER BY n
-) numbers WHERE n <= 60;
+-- Limpiar el procedimiento temporal
+DROP PROCEDURE IF EXISTS GenerarButacas;
 
 /* =========================================================
    6) FUNCIONES
@@ -246,9 +289,17 @@ INSERT INTO Funciones (IdFuncion, IdPelicula, IdSala, FechaProbableInicio, Fecha
 (23, 9, 5, '2025-12-28 19:00:00', '2025-12-28 20:35:00', '2025-12-28 19:00:00', NULL, 1050.00, 'I', 'Cancelada');
 
 /* =========================================================
-   7) RESERVAS
-   Usando INSERT...SELECT para obtener IdButaca real
-   basándose en IdSala y NroButaca
+   7) RESERVAS - Usando IdButaca DIRECTOS (ahora predecibles)
+   
+   Referencia de IdButaca por sala:
+   - Sala VIP (1):    IdButaca 1-50
+   - Sala 1 (2):      IdButaca 51-130
+   - Sala 2 (3):      IdButaca 131-210
+   - Sala 3 (4):      IdButaca 211-290
+   - Sala 4 (5):      IdButaca 291-370
+   - Sala IMAX (6):   IdButaca 371-470
+   - Sala 3D (7):     IdButaca 471-550
+   - Sala Premium (8): IdButaca 551-610
    
    Casos de prueba:
    - Límite de 4 reservas por DNI por fecha
@@ -257,205 +308,89 @@ INSERT INTO Funciones (IdFuncion, IdPelicula, IdSala, FechaProbableInicio, Fecha
    - Reservas canceladas (FechaBaja NOT NULL)
    ========================================================= */
 
--- Función 1: Avatar 3 en Sala VIP (IdSala=1)
--- DNI 12345678 tiene 4 reservas pagadas (límite)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 1, 1, 1, b.IdButaca, '12345678', '2025-12-15 10:00:00', NULL, 'S', 'Reserva pagada 1/4'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 1;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 1, 1, 1, b.IdButaca, '12345678', '2025-12-15 10:05:00', NULL, 'S', 'Reserva pagada 2/4'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 2;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 1, 1, 1, b.IdButaca, '12345678', '2025-12-15 10:10:00', NULL, 'S', 'Reserva pagada 3/4'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 3;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 1, 1, 1, b.IdButaca, '12345678', '2025-12-15 10:15:00', NULL, 'S', 'Reserva pagada 4/4 - LÍMITE'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 4;
-
+-- Función 1: Avatar 3 en Sala VIP (IdSala=1) - IdButaca 1-50
+-- DNI 12345678 tiene 4 reservas pagadas (límite) para el 2025-12-20
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(1, 1, 1, 1, '12345678', '2025-12-15 10:00:00', NULL, 'S', 'Reserva pagada 1/4'),
+(1, 1, 1, 2, '12345678', '2025-12-15 10:05:00', NULL, 'S', 'Reserva pagada 2/4'),
+(1, 1, 1, 3, '12345678', '2025-12-15 10:10:00', NULL, 'S', 'Reserva pagada 3/4'),
+(1, 1, 1, 4, '12345678', '2025-12-15 10:15:00', NULL, 'S', 'Reserva pagada 4/4 - LÍMITE'),
 -- Otro DNI en la misma función
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 1, 1, 1, b.IdButaca, '87654321', '2025-12-15 11:00:00', NULL, 'S', 'Reserva pagada - otro DNI'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 5;
+(1, 1, 1, 5, '87654321', '2025-12-15 11:00:00', NULL, 'S', 'Reserva pagada - otro DNI'),
+(1, 1, 1, 6, '87654321', '2025-12-15 11:05:00', NULL, 'N', 'Reserva NO pagada'),
+-- Reserva cancelada (FechaBaja NOT NULL) - butaca 7 queda LIBRE
+(1, 1, 1, 7, '11223344', '2025-12-15 12:00:00', '2025-12-16 10:00:00', 'S', 'Reserva CANCELADA'),
+(1, 1, 1, 8, '11223344', '2025-12-15 12:05:00', NULL, 'S', 'Reserva activa después de cancelar otra');
 
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 1, 1, 1, b.IdButaca, '87654321', '2025-12-15 11:05:00', NULL, 'N', 'Reserva NO pagada'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 6;
+-- Función 2: Matrix 5 en Sala VIP (IdSala=1) - IdButaca 1-50
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(2, 2, 1, 10, '12345678', '2025-12-15 13:00:00', NULL, 'S', 'Mismo DNI, otra función (21/12)'),
+(2, 2, 1, 11, '22334455', '2025-12-15 14:00:00', NULL, 'S', 'Reserva pagada'),
+(2, 2, 1, 12, '22334455', '2025-12-15 14:05:00', NULL, 'N', 'Reserva NO pagada');
 
--- Reserva cancelada (FechaBaja NOT NULL)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 1, 1, 1, b.IdButaca, '11223344', '2025-12-15 12:00:00', '2025-12-16 10:00:00', 'S', 'Reserva CANCELADA'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 7;
+-- Función 4: Avatar 3 en Sala 1 (IdSala=2) - IdButaca 51-130
+-- DNI 33445566 tiene 4 reservas pagadas (límite) para el 2025-12-20
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(4, 1, 2, 51, '33445566', '2025-12-15 15:00:00', NULL, 'S', 'Reserva pagada 1/4'),
+(4, 1, 2, 52, '33445566', '2025-12-15 15:05:00', NULL, 'S', 'Reserva pagada 2/4'),
+(4, 1, 2, 53, '33445566', '2025-12-15 15:10:00', NULL, 'S', 'Reserva pagada 3/4'),
+(4, 1, 2, 54, '33445566', '2025-12-15 15:15:00', NULL, 'S', 'Reserva pagada 4/4 - LÍMITE'),
+(4, 1, 2, 55, '44556677', '2025-12-15 16:00:00', NULL, 'S', 'Otro DNI');
 
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 1, 1, 1, b.IdButaca, '11223344', '2025-12-15 12:05:00', NULL, 'S', 'Reserva activa después de cancelar otra'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 8;
+-- Función 9: Misión Imposible en Sala 1 (IdSala=2) - IdButaca 51-130
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(9, 6, 2, 56, '55667788', '2025-12-15 17:00:00', NULL, 'S', 'Reserva pagada'),
+(9, 6, 2, 57, '55667788', '2025-12-15 17:05:00', NULL, 'S', 'Reserva pagada'),
+(9, 6, 2, 58, '66778899', '2025-12-15 18:00:00', NULL, 'N', 'Reserva NO pagada'),
+(9, 6, 2, 59, '66778899', '2025-12-15 18:05:00', NULL, 'N', 'Reserva NO pagada');
 
--- Función 2: Matrix 5 en Sala VIP (IdSala=1)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 2, 2, 1, b.IdButaca, '12345678', '2025-12-15 13:00:00', NULL, 'S', 'Mismo DNI, otra función'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 10;
+-- Función 10: Comedia en Sala 2 (IdSala=3) - IdButaca 131-210
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(10, 7, 3, 131, '44556677', '2025-12-16 13:00:00', NULL, 'S', 'Para reporte'),
+(10, 7, 3, 132, '44556677', '2025-12-16 13:05:00', NULL, 'S', 'Para reporte'),
+(10, 7, 3, 133, '55667788', '2025-12-16 14:00:00', NULL, 'S', 'Para reporte');
 
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 2, 2, 1, b.IdButaca, '22334455', '2025-12-15 14:00:00', NULL, 'S', 'Reserva pagada'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 11;
+-- Función 11: Drama en Sala 3 (IdSala=4) - IdButaca 211-290
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(11, 8, 4, 211, '66778899', '2025-12-16 15:00:00', NULL, 'S', 'Para reporte'),
+(11, 8, 4, 212, '66778899', '2025-12-16 15:05:00', NULL, 'S', 'Para reporte'),
+(11, 8, 4, 213, '77889900', '2025-12-16 16:00:00', NULL, 'S', 'Para reporte'),
+(11, 8, 4, 214, '77889900', '2025-12-16 16:05:00', NULL, 'S', 'Para reporte'),
+(11, 8, 4, 215, '88990011', '2025-12-16 17:00:00', NULL, 'S', 'Para reporte');
 
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 2, 2, 1, b.IdButaca, '22334455', '2025-12-15 14:05:00', NULL, 'N', 'Reserva NO pagada'
-FROM Butacas b WHERE b.IdSala = 1 AND b.NroButaca = 12;
+-- Función 12: Terror en Sala 4 (IdSala=5) - IdButaca 291-370
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(12, 9, 5, 291, '99001122', '2025-12-16 18:00:00', NULL, 'S', 'Para reporte'),
+(12, 9, 5, 292, '99001122', '2025-12-16 18:05:00', NULL, 'S', 'Para reporte'),
+(12, 9, 5, 293, '00112233', '2025-12-16 19:00:00', NULL, 'S', 'Para reporte');
 
--- Función 4: Avatar 3 en Sala 1 (IdSala=2) - Estreno
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 4, 1, 2, b.IdButaca, '33445566', '2025-12-15 15:00:00', NULL, 'S', 'Reserva pagada 1/4'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 1;
+-- Función 13: Odisea Espacial en IMAX (IdSala=6) - IdButaca 371-470
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(13, 10, 6, 371, '77889900', '2025-12-15 19:00:00', NULL, 'S', 'Reserva IMAX 1'),
+(13, 10, 6, 372, '77889900', '2025-12-15 19:05:00', NULL, 'S', 'Reserva IMAX 2'),
+(13, 10, 6, 373, '88990011', '2025-12-15 20:00:00', NULL, 'S', 'Reserva IMAX 3'),
+(13, 10, 6, 374, '88990011', '2025-12-15 20:05:00', NULL, 'S', 'Reserva IMAX 4'),
+(13, 10, 6, 375, '88990011', '2025-12-15 20:10:00', NULL, 'S', 'Reserva IMAX 5'),
+(13, 10, 6, 376, '99001122', '2025-12-15 21:00:00', NULL, 'N', 'Reserva IMAX NO pagada');
 
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 4, 1, 2, b.IdButaca, '33445566', '2025-12-15 15:05:00', NULL, 'S', 'Reserva pagada 2/4'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 2;
+-- Función 14: Aventuras Animadas en IMAX (IdSala=6) - IdButaca 371-470
+-- DNI 00112233 tiene 4 reservas pagadas (límite) para el 2025-12-22
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(14, 11, 6, 380, '00112233', '2025-12-15 22:00:00', NULL, 'S', 'Reserva pagada 1/4'),
+(14, 11, 6, 381, '00112233', '2025-12-15 22:05:00', NULL, 'S', 'Reserva pagada 2/4'),
+(14, 11, 6, 382, '00112233', '2025-12-15 22:10:00', NULL, 'S', 'Reserva pagada 3/4'),
+(14, 11, 6, 383, '00112233', '2025-12-15 22:15:00', NULL, 'S', 'Reserva pagada 4/4 - LÍMITE');
 
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 4, 1, 2, b.IdButaca, '33445566', '2025-12-15 15:10:00', NULL, 'S', 'Reserva pagada 3/4'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 3;
+-- Función 15: Amor en París en Sala Premium (IdSala=8) - IdButaca 551-610
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(15, 12, 8, 551, '11223344', '2025-12-15 23:00:00', NULL, 'S', 'Reserva Premium 1'),
+(15, 12, 8, 552, '11223344', '2025-12-15 23:05:00', NULL, 'S', 'Reserva Premium 2');
 
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 4, 1, 2, b.IdButaca, '33445566', '2025-12-15 15:15:00', NULL, 'S', 'Reserva pagada 4/4 - LÍMITE'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 4;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 4, 1, 2, b.IdButaca, '44556677', '2025-12-15 16:00:00', NULL, 'S', 'Otro DNI'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 5;
-
--- Función 9: Misión Imposible en Sala 1 (IdSala=2)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 9, 6, 2, b.IdButaca, '55667788', '2025-12-15 17:00:00', NULL, 'S', 'Reserva pagada'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 6;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 9, 6, 2, b.IdButaca, '55667788', '2025-12-15 17:05:00', NULL, 'S', 'Reserva pagada'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 7;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 9, 6, 2, b.IdButaca, '66778899', '2025-12-15 18:00:00', NULL, 'N', 'Reserva NO pagada'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 8;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 9, 6, 2, b.IdButaca, '66778899', '2025-12-15 18:05:00', NULL, 'N', 'Reserva NO pagada'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 9;
-
--- Función 13: Odisea Espacial en IMAX (IdSala=6)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 13, 10, 6, b.IdButaca, '77889900', '2025-12-15 19:00:00', NULL, 'S', 'Reserva IMAX 1'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 1;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 13, 10, 6, b.IdButaca, '77889900', '2025-12-15 19:05:00', NULL, 'S', 'Reserva IMAX 2'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 2;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 13, 10, 6, b.IdButaca, '88990011', '2025-12-15 20:00:00', NULL, 'S', 'Reserva IMAX 3'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 3;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 13, 10, 6, b.IdButaca, '88990011', '2025-12-15 20:05:00', NULL, 'S', 'Reserva IMAX 4'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 4;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 13, 10, 6, b.IdButaca, '88990011', '2025-12-15 20:10:00', NULL, 'S', 'Reserva IMAX 5'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 5;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 13, 10, 6, b.IdButaca, '99001122', '2025-12-15 21:00:00', NULL, 'N', 'Reserva IMAX NO pagada'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 6;
-
--- Función 14: Aventuras Animadas en IMAX (IdSala=6)
--- DNI 00112233 tiene 4 reservas pagadas (límite)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 14, 11, 6, b.IdButaca, '00112233', '2025-12-15 22:00:00', NULL, 'S', 'Reserva pagada 1/4'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 10;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 14, 11, 6, b.IdButaca, '00112233', '2025-12-15 22:05:00', NULL, 'S', 'Reserva pagada 2/4'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 11;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 14, 11, 6, b.IdButaca, '00112233', '2025-12-15 22:10:00', NULL, 'S', 'Reserva pagada 3/4'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 12;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 14, 11, 6, b.IdButaca, '00112233', '2025-12-15 22:15:00', NULL, 'S', 'Reserva pagada 4/4 - LÍMITE'
-FROM Butacas b WHERE b.IdSala = 6 AND b.NroButaca = 13;
-
--- Función 15: Amor en París en Sala Premium (IdSala=8)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 15, 12, 8, b.IdButaca, '11223344', '2025-12-15 23:00:00', NULL, 'S', 'Reserva Premium 1'
-FROM Butacas b WHERE b.IdSala = 8 AND b.NroButaca = 1;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 15, 12, 8, b.IdButaca, '11223344', '2025-12-15 23:05:00', NULL, 'S', 'Reserva Premium 2'
-FROM Butacas b WHERE b.IdSala = 8 AND b.NroButaca = 2;
-
--- Reservas adicionales para reportes de ocupación
--- Función 16
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 16, 6, 2, b.IdButaca, '12345678', '2025-12-16 10:00:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 10;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 16, 6, 2, b.IdButaca, '12345678', '2025-12-16 10:05:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 11;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 16, 6, 2, b.IdButaca, '22334455', '2025-12-16 11:00:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 2 AND b.NroButaca = 12;
-
--- Función 10: Comedia en Sala 2 (IdSala=3)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 10, 7, 3, b.IdButaca, '44556677', '2025-12-16 13:00:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 3 AND b.NroButaca = 1;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 10, 7, 3, b.IdButaca, '44556677', '2025-12-16 13:05:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 3 AND b.NroButaca = 2;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 10, 7, 3, b.IdButaca, '55667788', '2025-12-16 14:00:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 3 AND b.NroButaca = 3;
-
--- Función 11: Drama en Sala 3 (IdSala=4)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 11, 8, 4, b.IdButaca, '66778899', '2025-12-16 15:00:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 4 AND b.NroButaca = 1;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 11, 8, 4, b.IdButaca, '66778899', '2025-12-16 15:05:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 4 AND b.NroButaca = 2;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 11, 8, 4, b.IdButaca, '77889900', '2025-12-16 16:00:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 4 AND b.NroButaca = 3;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 11, 8, 4, b.IdButaca, '77889900', '2025-12-16 16:05:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 4 AND b.NroButaca = 4;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 11, 8, 4, b.IdButaca, '88990011', '2025-12-16 17:00:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 4 AND b.NroButaca = 5;
-
--- Función 12: Terror en Sala 4 (IdSala=5)
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 12, 9, 5, b.IdButaca, '99001122', '2025-12-16 18:00:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 5 AND b.NroButaca = 1;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 12, 9, 5, b.IdButaca, '99001122', '2025-12-16 18:05:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 5 AND b.NroButaca = 2;
-
-INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones)
-SELECT 12, 9, 5, b.IdButaca, '00112233', '2025-12-16 19:00:00', NULL, 'S', 'Para reporte'
-FROM Butacas b WHERE b.IdSala = 5 AND b.NroButaca = 3;
+-- Función 16: Misión Imposible en Sala 1 (IdSala=2) - IdButaca 51-130
+INSERT INTO Reservas (IdFuncion, IdPelicula, IdSala, IdButaca, DNI, FechaAlta, FechaBaja, EstaPagada, Observaciones) VALUES
+(16, 6, 2, 60, '12345678', '2025-12-16 10:00:00', NULL, 'S', 'Para reporte'),
+(16, 6, 2, 61, '12345678', '2025-12-16 10:05:00', NULL, 'S', 'Para reporte'),
+(16, 6, 2, 62, '22334455', '2025-12-16 11:00:00', NULL, 'S', 'Para reporte');
 
 /* =========================================================
    8) VERIFICACIÓN DE DATOS
