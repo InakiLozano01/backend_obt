@@ -15,7 +15,7 @@ reporte_item_model = ns.model('ReporteOcupacionItem', {
     'IdSala': fields.Integer(description='ID de la sala'),
     'Sala': fields.String(description='Nombre de la sala'),
     'TotalButacasVendidas': fields.Integer(description='Total de butacas vendidas'),
-    'TotalIngresosRecaudados': fields.Float(description='Total de ingresos recaudados')
+    'TotalIngresosRecaudados': fields.String(description='Total de ingresos recaudados (Decimal como string para preservar precision)')
 })
 
 pagination_model = ns.model('Pagination', {

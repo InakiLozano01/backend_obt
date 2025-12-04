@@ -12,7 +12,7 @@ ns = Namespace('precios', description='Operaciones de precios de funciones')
 
 precio_response_model = ns.model('PrecioResponse', {
     'id_funcion': fields.Integer(required=True, description='ID de la funcion'),
-    'precio_final': fields.Float(required=True, description='Precio final calculado'),
+    'precio_final': fields.String(required=True, description='Precio final calculado (Decimal como string para preservar precision)'),
     'mensaje': fields.String(required=True, description='Mensaje del calculo')
 })
 
